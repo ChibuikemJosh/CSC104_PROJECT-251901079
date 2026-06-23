@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+
+        .form-section,
+        .books-section,
+        .available-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        input {
+            padding: 10px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: none;
+            background: #2563eb;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .borrow-btn {
+            background: #dc2626;
+        }
+
+        .return-btn {
+            background: #16a34a;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            background: #2563eb;
+            color: white;
+        }
+
+        .available {
+            color: green;
+            font-weight: bold;
+        }
+
+        .borrowed {
+            color: red;
+            font-weight: bold;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>📚 Library Management System</h1>
+
+        <div class="form-section">
+            <h2>Add a Book</h2>
+
+            <input type="text" id="title" placeholder="Book Title" required>
+            <input type="text" id="author" placeholder="Author" required>
+            <input type="number" id="year" placeholder="Year" required>
+
+            <button id="addBookBtn">Add Book</button>
+        </div>
+
+        <div class="books-section">
+            <h2>Library Books</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Year</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody id="bookTableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="available-section">
+            <h2>Available Books</h2>
+            <ul id="availableBooksList"></ul>
+        </div>
+    </div>
+
+    <script>
+        class Book {
+            constructor(title, author, year) {
+                this.title = title;
+                this.author = author;
+                this.year = year;
+                this.available = true;
+            }
+        }
+
+        class Library {
+            constructor() {
+                this.books = [];
+            }
+
+            addBook(book) {
+                this.books.push(book);
+            }
+
+            borrowBook(title) {
+                const book = this.books.find(
+                    b => b.title === title
+                );
+
+                if (book && book.available) {
+                    book.available = false;
+                }
+            }
+
+            returnBook(title) {
+                const book = this.books.find(
+                    b => b.title === title
+                );
+
+                if (book) {
+                    book.available = true;
+                }
+            }
+
+            listAvailableBooks() {
+                return this.books.filter(
+                    b => b.available
+                );
+            }
+        }
+
+        const library = new Library();
+
+        const titleInput = document.getElementById("title");
+        const authorInput = document.getElementById("author");
+        const yearInput = document.getElementById("year");
+
+        const addBookBtn = document.getElementById("addBookBtn");
+        const bookTableBody = document.getElementById("bookTableBody");
+        const availableBooksList = document.getElementById("availableBooksList");
+
+        function renderBooks() {
+
+            bookTableBody.innerHTML = "";
+
+            library.books.forEach(book => {
+
+                const row = document.createElement("tr");
+
+                row.innerHTML = `
+                    <td>${book.title}</td>
+                    <td>${book.author}</td>
+                    <td>${book.year}</td>
+                    <td class="${book.available ? 'available' : 'borrowed'}">
+                        ${book.available ? 'Available' : 'Borrowed'}
+                    </td>
+                    <td>
+                        ${
+                            book.available
+                            ? `<button class="borrow-btn" onclick="borrowBook('${book.title}')">Borrow</button>`
+                            : `<button class="return-btn" onclick="returnBook('${book.title}')">Return</button>`
+                        }
+                    </td>
+                `;
+
+                bookTableBody.appendChild(row);
+            });
+
+            renderAvailableBooks();
+        }
+
+        function renderAvailableBooks() {
+
+            availableBooksList.innerHTML = "";
+
+            const availableBooks = library.listAvailableBooks();
+
+            availableBooks.forEach(book => {
+
+                const li = document.createElement("li");
+
+                li.textContent =
+                    `${book.title} by ${book.author} (${book.year})`;
+
+                availableBooksList.appendChild(li);
+            });
+        }
+
+        function borrowBook(title) {
+
+            library.borrowBook(title);
+
+            renderBooks();
+        }
+
+        function returnBook(title) {
+
+            library.returnBook(title);
+
+            renderBooks();
+        }
+
+        addBookBtn.addEventListener("click", () => {
+
+            const title = titleInput.value.trim();
+            const author = authorInput.value.trim();
+            const year = yearInput.value.trim();
+
+            if (!title || !author || !year) {
+                alert("Please fill all fields");
+                return;
+            }
+
+            const book = new Book(
+                title,
+                author,
+                parseInt(year)
+            );
+
+            library.addBook(book);
+
+            titleInput.value = "";
+            authorInput.value = "";
+            yearInput.value = "";
+
+            renderBooks();
+        });
+
+        library.addBook(
+            new Book("Clean Code", "Robert C. Martin", 2008)
+        );
+
+        library.addBook(
+            new Book("The Lean Startup", "Eric Ries", 2011)
+        );
+
+        library.addBook(
+            new Book("Eloquent JavaScript", "Marijn Haverbeke", 2018)
+        );
+
+        renderBooks();
+    </script>
+
+</body>
+</html>
